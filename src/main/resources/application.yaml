@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: auctionapp
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auctiondb
+    username: auction_user
+    password: auction_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+jwt:
+  secret: gVKAejfSDrchyun8OJi1VQ9h3xP2mKqL7nRwZdYsT4uBvCeF8jA5oW6iX0yHlQ1
+  access-token-expiration-ms: 604800000
+  refresh-token-expiration-ms: 604800000
