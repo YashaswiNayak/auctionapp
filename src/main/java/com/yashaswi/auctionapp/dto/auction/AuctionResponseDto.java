@@ -1,5 +1,6 @@
 package com.yashaswi.auctionapp.dto.auction;
 
+import com.yashaswi.auctionapp.enums.AuctionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,5 +17,6 @@ public class AuctionResponseDto {
     Double startingPrice;
     Double minimumIncrement;
     String ownerUsername;
+    AuctionStatus status;
     Integer ownerId;
 }

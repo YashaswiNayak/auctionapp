@@ -5,7 +5,9 @@ import com.yashaswi.auctionapp.dto.auction.AuctionResponseDto;
 import com.yashaswi.auctionapp.dto.auction.AuctionUpdateDto;
 import com.yashaswi.auctionapp.entity.Auction;
 import com.yashaswi.auctionapp.entity.User;
+import com.yashaswi.auctionapp.enums.AuctionStatus;
 import com.yashaswi.auctionapp.exception.AuctionNotFoundException;
+import com.yashaswi.auctionapp.exception.InvalidAuctionStateException;
 import com.yashaswi.auctionapp.exception.UserNotFoundException;
 import com.yashaswi.auctionapp.mapper.EntityToDtoMapper;
 import com.yashaswi.auctionapp.repository.AuctionRepository;
@@ -25,8 +27,7 @@ public class AuctionService {
 
     public AuctionResponseDto createNewAuction(AuctionCreationDto auctionCreationDto, String username) {
         User creator = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User does not exist"));
-        Auction auction = Auction.builder().title(auctionCreationDto.getTitle())            .description(auctionCreationDto.getDescription())
-                .startingPrice(auctionCreationDto.getStartingPrice()).minimumIncrement(auctionCreationDto.getMinimumIncrement()).startTime(auctionCreationDto.getStartTime()).endTime(auctionCreationDto.getEndTime()).user(creator).build();
+        Auction auction = Auction.builder().title(auctionCreationDto.getTitle()).description(auctionCreationDto.getDescription()).startingPrice(auctionCreationDto.getStartingPrice()).currentPrice(auctionCreationDto.getStartingPrice()).minimumIncrement(auctionCreationDto.getMinimumIncrement()).startTime(auctionCreationDto.getStartTime()).endTime(auctionCreationDto.getEndTime()).user(creator).build();
         log.debug(auction.getTitle());
         auctionRepository.save(auction);
         return EntityToDtoMapper.toDto(auction);
@@ -38,6 +39,11 @@ public class AuctionService {
         return auctionLists.map(EntityToDtoMapper::toDto);
     }
 
+    public Page<AuctionResponseDto> getAuctions(Pageable pageable) {
+        Page<Auction> auctions = auctionRepository.findAll(pageable);
+        return auctions.map(EntityToDtoMapper::toDto);
+    }
+
     public AuctionResponseDto getAuctionById(String username, Integer id) {
         Auction auction = auctionRepository.findByIdAndUser_Username(id, username).orElseThrow(() -> new AuctionNotFoundException("Auction Not Found"));
         return EntityToDtoMapper.toDto(auction);
@@ -45,6 +51,9 @@ public class AuctionService {
 
     public AuctionResponseDto updateAuction(String username, Integer id, AuctionUpdateDto auctionUpdateDto) {
         Auction auction = auctionRepository.findByIdAndUser_Username(id, username).orElseThrow(() -> new AuctionNotFoundException("Auction Not Found"));
+        if (auction.getStatus() != AuctionStatus.DRAFT) {
+            throw new InvalidAuctionStateException("Cannot update an auction that is not in DRAFT stage");
+        }
         if (auctionUpdateDto.getTitle() != null) {
             auction.setTitle(auctionUpdateDto.getTitle());
         }
@@ -67,6 +76,9 @@ public class AuctionService {
 
     public String deleteAuction(String username, Integer id) {
         Auction auction = auctionRepository.findByIdAndUser_Username(id, username).orElseThrow(() -> new AuctionNotFoundException("Auction Not Found"));
+        if (auction.getStatus() != AuctionStatus.DRAFT) {
+            throw new InvalidAuctionStateException("Cannot update an auction that is not in DRAFT stage");
+        }
         auctionRepository.delete(auction);
         log.info("Deleted Successfully");
         return "Deleted Successfully";

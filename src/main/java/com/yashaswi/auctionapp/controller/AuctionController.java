@@ -22,9 +22,15 @@ public class AuctionController {
     private final AuctionService auctionService;
 
     @GetMapping
-    public ResponseEntity<Page<AuctionResponseDto>> getAllAuctions(@AuthenticationPrincipal UserDetails userDetails, @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<Page<AuctionResponseDto>> getAllAuctionsByUser(@AuthenticationPrincipal UserDetails userDetails, @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<AuctionResponseDto> auctionResponseDto = auctionService.getAllAuctionByUser(userDetails.getUsername(), pageable);
         return ResponseEntity.ok(auctionResponseDto);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Page<AuctionResponseDto>> getAllAuctions(@PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<AuctionResponseDto> auctions = auctionService.getAuctions(pageable);
+        return ResponseEntity.ok(auctions);
     }
 
     @PostMapping

@@ -25,6 +25,7 @@ public class EntityToDtoMapper {
         auctionResponseDto.setId(auction.getId());
         auctionResponseDto.setTitle(auction.getTitle());
         auctionResponseDto.setDescription(auction.getDescription());
+        auctionResponseDto.setStatus(auction.getStatus());
         auctionResponseDto.setStartingPrice(auction.getStartingPrice());
         auctionResponseDto.setMinimumIncrement(auction.getMinimumIncrement());
         auctionResponseDto.setOwnerId(auction.getUser().getId());
