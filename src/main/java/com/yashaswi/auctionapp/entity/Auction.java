@@ -70,6 +70,9 @@ public class Auction {
     @Builder.Default
     private List<Bid> bids = new ArrayList<>();
 
+    @Version
+    private Long version;
+
 
 }
 

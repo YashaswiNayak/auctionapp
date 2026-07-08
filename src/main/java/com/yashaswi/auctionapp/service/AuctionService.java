@@ -18,6 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -26,6 +29,7 @@ public class AuctionService {
     private final UserRepository userRepository;
 
     public AuctionResponseDto createNewAuction(AuctionCreationDto auctionCreationDto, String username) {
+        validateTime(auctionCreationDto.getStartTime(), auctionCreationDto.getEndTime());
         User creator = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException("User does not exist"));
         Auction auction = Auction.builder().title(auctionCreationDto.getTitle()).description(auctionCreationDto.getDescription()).startingPrice(auctionCreationDto.getStartingPrice()).currentPrice(auctionCreationDto.getStartingPrice()).minimumIncrement(auctionCreationDto.getMinimumIncrement()).startTime(auctionCreationDto.getStartTime()).endTime(auctionCreationDto.getEndTime()).user(creator).build();
         log.debug(auction.getTitle());
@@ -40,8 +44,16 @@ public class AuctionService {
     }
 
     public Page<AuctionResponseDto> getAuctions(Pageable pageable) {
-        Page<Auction> auctions = auctionRepository.findAll(pageable);
+        Page<Auction> auctions = auctionRepository.findByStatusIn(
+                List.of(AuctionStatus.LIVE, AuctionStatus.FINISH),
+                pageable
+        );
         return auctions.map(EntityToDtoMapper::toDto);
+    }
+
+    public AuctionResponseDto getAuction(Integer id) {
+        Auction auction = auctionRepository.findById(id).orElseThrow(() -> new AuctionNotFoundException("Auction Not found"));
+        return EntityToDtoMapper.toDto(auction);
     }
 
     public AuctionResponseDto getAuctionById(String username, Integer id) {
@@ -50,6 +62,7 @@ public class AuctionService {
     }
 
     public AuctionResponseDto updateAuction(String username, Integer id, AuctionUpdateDto auctionUpdateDto) {
+        validateTime(auctionUpdateDto.getStartTime(), auctionUpdateDto.getEndTime());
         Auction auction = auctionRepository.findByIdAndUser_Username(id, username).orElseThrow(() -> new AuctionNotFoundException("Auction Not Found"));
         if (auction.getStatus() != AuctionStatus.DRAFT) {
             throw new InvalidAuctionStateException("Cannot update an auction that is not in DRAFT stage");
@@ -82,6 +95,15 @@ public class AuctionService {
         auctionRepository.delete(auction);
         log.info("Deleted Successfully");
         return "Deleted Successfully";
+    }
+
+    private void validateTime(LocalDateTime startTime, LocalDateTime endtime) {
+        if (startTime.isAfter(endtime)) {
+            throw new IllegalArgumentException("Start time must be before end time");
+        }
+        if (startTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Start time cannot be in the past");
+        }
     }
 
 

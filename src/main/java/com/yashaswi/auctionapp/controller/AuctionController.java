@@ -33,6 +33,11 @@ public class AuctionController {
         return ResponseEntity.ok(auctions);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<AuctionResponseDto> getAuction(@PathVariable Integer id) {
+        return ResponseEntity.ok(auctionService.getAuction(id));
+    }
+
     @PostMapping
     public ResponseEntity<AuctionResponseDto> createAuction(@RequestBody @Valid AuctionCreationDto auctionCreationDto, @AuthenticationPrincipal UserDetails userDetails) {
         AuctionResponseDto auctionResponseDto = auctionService.createNewAuction(auctionCreationDto, userDetails.getUsername());

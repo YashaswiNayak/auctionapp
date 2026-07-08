@@ -44,4 +44,6 @@ public interface AuctionRepository extends JpaRepository<Auction, Integer> {
             AuctionStatus status,
             LocalDateTime now
     );
+
+    Page<Auction> findByStatusIn(List<AuctionStatus> statuses, Pageable pageable);
 }

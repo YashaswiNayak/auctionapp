@@ -18,6 +18,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class BidService {
@@ -48,6 +50,9 @@ public class BidService {
         }
         if (auction.getStatus() != AuctionStatus.LIVE) {
             throw new IllegalArgumentException("Auction is not live yet, please wait");
+        }
+        if (auction.getEndTime().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot bid after end time");
         }
 
         Double basePrice = auction.getCurrentPrice() != null ? auction.getCurrentPrice() : auction.getStartingPrice();
