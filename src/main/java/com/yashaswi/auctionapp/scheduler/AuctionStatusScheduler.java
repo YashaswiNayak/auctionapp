@@ -21,7 +21,7 @@ public class AuctionStatusScheduler {
     public void updateAuctionStatuses() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<Auction> auctionsToActivate = auctionRepository.findByStatusAndStartTimeBeforeAndEndTimeAfter(AuctionStatus.DRAFT, now, now);
+        List<Auction> auctionsToActivate = auctionRepository.findByStatusAndStartTimeBeforeAndEndTimeAfter(AuctionStatus.SCHEDULED, now, now);
 
         for (Auction auction : auctionsToActivate) {
             auction.setStatus(AuctionStatus.LIVE);

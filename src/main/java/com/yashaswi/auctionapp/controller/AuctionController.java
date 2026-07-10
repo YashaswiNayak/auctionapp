@@ -52,6 +52,18 @@ public class AuctionController {
         return ResponseEntity.ok(auctionResponseDto);
     }
 
+    @PostMapping("/{id}/schedule")
+    public ResponseEntity<AuctionResponseDto> scheduleAuction(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails) {
+        AuctionResponseDto auctionResponseDto = auctionService.finalizeAuction(userDetails.getUsername(), id);
+        return ResponseEntity.ok(auctionResponseDto);
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<AuctionResponseDto> cancelAuction(@PathVariable Integer id, @AuthenticationPrincipal UserDetails userDetails) {
+        AuctionResponseDto auctionResponseDto = auctionService.cancelAuction(userDetails.getUsername(), id);
+        return ResponseEntity.ok(auctionResponseDto);
+    }
+
     @DeleteMapping("/{id}")
     public String deleteAuction(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Integer id) {
         return auctionService.deleteAuction(userDetails.getUsername(), id);

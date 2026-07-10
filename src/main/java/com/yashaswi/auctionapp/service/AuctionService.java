@@ -37,6 +37,18 @@ public class AuctionService {
         return EntityToDtoMapper.toDto(auction);
     }
 
+    public AuctionResponseDto finalizeAuction(String username, Integer id) {
+        Auction auction = auctionRepository.findByIdAndUser_Username(id, username).orElseThrow(() -> new AuctionNotFoundException("Auction does not exist"));
+        if (auction.getStatus() != AuctionStatus.DRAFT) {
+            throw new InvalidAuctionStateException("Only auctions in DRAFT state can be scheduled");
+        }
+        validateTime(auction.getStartTime(), auction.getEndTime());
+
+        auction.setStatus(AuctionStatus.SCHEDULED);
+        auctionRepository.save(auction);
+        return EntityToDtoMapper.toDto(auction);
+    }
+
     public Page<AuctionResponseDto> getAllAuctionByUser(String username, Pageable pageable) {
         Page<Auction> auctionLists = auctionRepository.findAllByUserUsernameWithUser(username, pageable);
         log.info("Returning all auctions");
@@ -44,15 +56,12 @@ public class AuctionService {
     }
 
     public Page<AuctionResponseDto> getAuctions(Pageable pageable) {
-        Page<Auction> auctions = auctionRepository.findByStatusIn(
-                List.of(AuctionStatus.LIVE, AuctionStatus.FINISH),
-                pageable
-        );
+        Page<Auction> auctions = auctionRepository.findByStatusInWithUser(List.of(AuctionStatus.LIVE, AuctionStatus.FINISH), pageable);
         return auctions.map(EntityToDtoMapper::toDto);
     }
 
     public AuctionResponseDto getAuction(Integer id) {
-        Auction auction = auctionRepository.findById(id).orElseThrow(() -> new AuctionNotFoundException("Auction Not found"));
+        Auction auction = auctionRepository.findByIdWithUser(id).orElseThrow(() -> new AuctionNotFoundException("Auction Not found"));
         return EntityToDtoMapper.toDto(auction);
     }
 
@@ -62,7 +71,6 @@ public class AuctionService {
     }
 
     public AuctionResponseDto updateAuction(String username, Integer id, AuctionUpdateDto auctionUpdateDto) {
-        validateTime(auctionUpdateDto.getStartTime(), auctionUpdateDto.getEndTime());
         Auction auction = auctionRepository.findByIdAndUser_Username(id, username).orElseThrow(() -> new AuctionNotFoundException("Auction Not Found"));
         if (auction.getStatus() != AuctionStatus.DRAFT) {
             throw new InvalidAuctionStateException("Cannot update an auction that is not in DRAFT stage");
@@ -82,6 +90,8 @@ public class AuctionService {
         if (auctionUpdateDto.getEndTime() != null) {
             auction.setEndTime(auctionUpdateDto.getEndTime());
         }
+        validateTime(auction.getStartTime(), auction.getEndTime());
+
         auctionRepository.save(auction);
         log.info("Updated Successfully");
         return EntityToDtoMapper.toDto(auction);
@@ -97,12 +107,26 @@ public class AuctionService {
         return "Deleted Successfully";
     }
 
-    private void validateTime(LocalDateTime startTime, LocalDateTime endtime) {
-        if (startTime.isAfter(endtime)) {
-            throw new IllegalArgumentException("Start time must be before end time");
+    public AuctionResponseDto cancelAuction(String username, Integer id) {
+        Auction auction = auctionRepository.findByIdAndUser_Username(id, username).orElseThrow(() -> new AuctionNotFoundException("Auction Not Found"));
+        if (auction.getStatus() != AuctionStatus.SCHEDULED) {
+            throw new InvalidAuctionStateException("Only Auctions That Are Scheduled can be Canclled");
+        }
+        auction.setStatus(AuctionStatus.CANCELLED);
+        auctionRepository.save(auction);
+        log.info("Auction is cancelled successfully");
+        return EntityToDtoMapper.toDto(auction);
+    }
+
+    private void validateTime(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime == null || endTime == null) {
+            throw new InvalidAuctionStateException("Start time and end time are required");
+        }
+        if (!startTime.isBefore(endTime)) {
+            throw new InvalidAuctionStateException("Start time must be before end time");
         }
         if (startTime.isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Start time cannot be in the past");
+            throw new InvalidAuctionStateException("Start time cannot be in the past");
         }
     }
 

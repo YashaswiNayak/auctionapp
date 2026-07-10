@@ -45,5 +45,24 @@ public interface AuctionRepository extends JpaRepository<Auction, Integer> {
             LocalDateTime now
     );
 
-    Page<Auction> findByStatusIn(List<AuctionStatus> statuses, Pageable pageable);
+    @Query(value = """
+            select a
+            from Auction a
+            join fetch a.user
+            where a.status in :statuses
+            """,
+            countQuery = """
+                    select count(a)
+                    from Auction a
+                    where a.status in :statuses
+                    """)
+    Page<Auction> findByStatusInWithUser(@Param("statuses") List<AuctionStatus> statuses, Pageable pageable);
+
+    @Query("""
+    select a
+    from Auction a
+    join fetch a.user
+    where a.id = :id
+    """)
+    Optional<Auction> findByIdWithUser(@Param("id") Integer id);
 }
